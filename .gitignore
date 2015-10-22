@@ -14,3 +14,14 @@ cabal.sandbox.config
 *.prof
 *.aux
 *.hp
+.stack-work/
+out.js
+out.stats
+rts.js
+runmain.js
+lib.js
+all.js
+*.js_o
+*.js_hi
+.DS_Store
+manifest.webapp
