@@ -63,9 +63,7 @@ Before building GHCJS, we need to tell GHCJS where to find a binary called `happ
 ```bash
 $ cd botapi/server && stack install happy && export PATH=$HOME/.local/bin:$PATH && cd ..
 ```
-`happy` is required to build GHCJS's dependencies, but `happy` must be built with GHC and not GHCJS, so we use the version of GHC available to `botserver` to compile `happy`, and temporarily add the binary (which `stack` places in your home directory) to our path.
-
-Now we can build GHCJS:
+`happy` is required to build GHCJS's dependencies, but `happy` must be built with GHC (the regular, non-Javascript Haskell compiler) and not GHCJS, so the above command uses the version of GHC available to `botserver` to compile `happy`, and temporarily adds the binary (which `stack` placed in your `~/.local/bin/` directory) to our path, for GHCJS to use. Now we can build GHCJS:
 ```bash
 $ cd botapi/frontend
 $ nvm install v0.12.7
