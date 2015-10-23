@@ -82,7 +82,7 @@ Now that your development environment is complete, it's quite simple to make cha
 $ stack build --ghc-options="-O2 -static -optl-static -optl-pthread" --copy-bins
 ```
 
-which places a binary called `botserver` in `~/.local/bin/` - Running this binary (`./botserver`) on your laptop starts the server, but where's the javascript? Let's first compile the frontend so that it uses nicer CSS `index.html` and includes a picture of the roomba (shamelessly taken from the roomba's instruction manual):
+which places a binary called `botserver` in `~/.local/bin/` - Running this binary (`./botserver`) on your laptop starts the server, but where's the javascript? Let's first compile the frontend so that it uses the nicer CSS in our own [`index.html` here](https://github.com/mmaz/botapi/blob/master/frontend/app.jsexe/index.html) and includes a picture of the roomba (shamelessly taken from the roomba's instruction manual):
 
 ```bash
 $ cd botapi/frontend
