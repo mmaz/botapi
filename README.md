@@ -27,7 +27,7 @@ $ curl http://roomba:9876/ccw
 
 So the following shell command would rotate the roomba clockwise for 10 seconds:
 ```bash
-$ curl http://roomba:9876/cw && sleep 10 && http://roomba:9876/stop
+$ curl http://roomba:9876/cw && sleep 10 && curl http://roomba:9876/stop
 ```
 
 # Development notes
