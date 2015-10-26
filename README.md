@@ -15,7 +15,9 @@ To dissuade your lab partner's natural inclination to try driving your laptop in
 
 ![](https://raw.githubusercontent.com/wiki/mmaz/botapi/images/roomba_schematic.png)
 
-In additon to using the buttons on the webpage, you can drive the roomba around programatically:
+# `curl` interface
+
+In additon to using the buttons on the webpage, you can drive the roomba around programatically. `curl` is a commandline program that, by default, takes a URL and issues a GET request to a webserver. The webserver controlling the roomba offers several commands for driving. `stop` is the most important command for halting runaway roombas. The other commands, `forward`, `back`, `cw` (clockwise), and `ccw` (counterclockwise) will each instruct the roomba to begin moving or rotating in that direction until `stop` is later received by the webserver. In summary, here are the available driving commands:
 
 ```bash
 $ curl http://roomba:9876/stop
@@ -25,14 +27,14 @@ $ curl http://roomba:9876/cw
 $ curl http://roomba:9876/ccw
 ```
 
-So the following shell command would rotate the roomba clockwise for 10 seconds:
+So the following shell command would rotate the roomba clockwise for 10 seconds (instead of `sleep` try `usleep` to rotate for a given number of microseconds):
 ```bash
 $ curl http://roomba:9876/cw && sleep 10 && curl http://roomba:9876/stop
 ```
 
 # Development notes
 
-The webserver and the frontend interface (for your browser) are both written in Haskell, implying that some Haskell source code has been transcompiled into executable Javascript for the browser. Thanks to the Haskell community's efforts, this process is quite simple (approximately two shell commands). Details below! 
+For completing your lab, the server and javascript has already been compiled and the server has been started by the course staff, so these instructions can be ignored. If you would like to modify the server, for instance, to modify the rate of rotation, please read further. The webserver and the frontend interface (for your browser) are both written in Haskell, implying that some Haskell source code has been transcompiled into executable Javascript for the browser. Thanks to the Haskell community's efforts, this process is quite simple (approximately two shell commands). Details below! Alternatively, there are some other projects such as [pycreate](https://github.com/mgobryan/pycreate) for Python folks and [create-oi](https://github.com/drzaiusx11/create-oi) for JS folks. Don't have access to an iRobot create roomba? Check [this arduino project](https://github.com/b3cft/ArduinoOpenInterface) out for an alternative! And lastly, and perhaps most importantly, here's the very useful [description of the serial interface](http://www.irobot.com/filelibrary/pdfs/hrd/create/Create%20Open%20Interface_v2.pdf) from iRobot.
 
 ## Prerequisites
 These are quickstart instructions to build both the server and the frontend. (If you only want to build the server, then you only need to install `stack`.) These two tools, `stack` and `nvm`, are "fully sandboxed" - they only scribble inside their respective directories in your `$HOME` directory, and won't touch anything else on your system. To elaborate, they sandbox entire language ecosystems - `stack` sandboxes the Haskell language, its dependencies, and your compiled code, and `nvm` similarly sandboxes the NodeJS language, runtime, etc.
