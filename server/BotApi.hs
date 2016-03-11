@@ -11,12 +11,13 @@ import           Control.Monad.IO.Class (liftIO)
 import           Servant
 import           Data.Word
 import           System.Directory
-import           System.Hardware.Serialport
+-- import           System.Hardware.Serialport
 import qualified Data.List as L
 import qualified Data.Char as C
 import qualified Data.ByteString as B
 
-type CommandChan = B.ByteString
+-- type CommandChan = B.ByteString
+type CommandChan = String
 type SerialChan = String
 data BotChan = BotChan {
   commands :: TChan CommandChan
@@ -56,17 +57,17 @@ mkDrive :: [Word8] -> B.ByteString
 mkDrive = B.concat . map B.singleton . (driveOpcode :)
 
 --TODO(MAZUMDER) this nonsense is about as untyped as you can get - promote all constants to singletons
-queueCommand :: B.ByteString -> ReaderT BotChan (EitherT ServantErr IO) ()
+queueCommand :: String -> ReaderT BotChan (EitherT ServantErr IO) ()
 queueCommand bs = do
   BotChan{..} <- ask
   liftIO . atomically $ writeTChan commands bs
 
 continuouslyforward, continuouslyback, stop, continuouslycw, continuouslyccw :: ReaderT BotChan (EitherT ServantErr IO) ()
-continuouslyforward = queueCommand $ mkDrive [0, 150, 128, 0] -- +15cm/s translational
-continuouslyback = queueCommand $ mkDrive [255, 106, 128, 0] -- -15cm/s translational
-stop = queueCommand $ mkDrive [0, 0, 0, 0] -- TODO(MAZUMDER) this does not match with pycreate
-continuouslycw = queueCommand $ mkDrive [0, 67, 255, 255] --  -30 deg/sec rotational
-continuouslyccw = queueCommand $ mkDrive [0, 67, 0, 1] --  +30 deg/sec rotational
+continuouslyforward = queueCommand "forward" --  mkDrive [0, 150, 128, 0] -- +15cm/s translational
+continuouslyback = queueCommand "backward" --  mkDrive [255, 106, 128, 0] -- -15cm/s translational
+stop = queueCommand "stop" -- mkDrive [0, 0, 0, 0] -- TODO(MAZUMDER) this does not match with pycreate
+continuouslycw = queueCommand "cw" --  mkDrive [0, 67, 255, 255] --  -30 deg/sec rotational
+continuouslyccw = queueCommand "ccw" -- mkDrive [0, 67, 0, 1] --  +30 deg/sec rotational
 
 startOpcode, safeOpcode, driveOpcode :: Word8
 startOpcode = 128
@@ -75,7 +76,7 @@ driveOpcode = 137
 
 serialx :: BotChan -> IO () --TODO(MAZUMDER) switch loop to Pipes
 serialx (BotChan commandchan serialchan) = do
-  kickoff <- async (return ())
+  kickoff <- async (atomically $ writeTChan serialchan "debug")
   loop kickoff
   where loop :: Async () -> IO ()
         loop old = do
@@ -83,26 +84,26 @@ serialx (BotChan commandchan serialchan) = do
           print $ "connecting to " ++ s
           cancel old
           atomically $ drain commandchan
-          new <- async (bot s)
-          -- new <- async (dbg s)
+          -- new <- async (bot s)
+          new <- async (dbg s)
           loop new
-        bot :: String -> IO ()
-        bot s = withSerial s defaultSerialSettings { commSpeed = CS57600 } $ \h -> do
-          _ <- send h $ B.singleton startOpcode
-          _ <- send h $ B.singleton safeOpcode
-          forever $ do
-            c <- atomically $ readTChan commandchan
-            send h c
+        -- bot :: String -> IO ()
+        -- bot s = withSerial s defaultSerialSettings { commSpeed = CS57600 } $ \h -> do
+        --   _ <- send h $ B.singleton startOpcode
+        --   _ <- send h $ B.singleton safeOpcode
+        --   forever $ do
+        --     c <- atomically $ readTChan commandchan
+        --     send h c
         drain :: TChan CommandChan -> STM () -- if the bot thread dies (loses serial connection) then drain any commands before opening a new serial connection
         drain ch = do
           e <- isEmptyTChan ch
           unless e $ readTChan ch >> drain ch
-        -- dbg :: String -> IO ()
-        -- dbg s = do
-        --   print s
-        --   forever $ do
-        --     c <- atomically $ readTChan commandchan
-        --     print c
+        dbg :: String -> IO ()
+        dbg s = do
+          print s
+          forever $ do
+            c <- atomically $ readTChan commandchan
+            print c
 
 main :: IO ()
 main = do
@@ -110,4 +111,4 @@ main = do
   ser <- atomically newTChan
   let botchan = BotChan cmds ser
   _ <- async $ serialx botchan -- TODO(MAZUMDER) clean teardown with withAsync
-  run 9876 $ app botchan
+  run 9878 $ app botchan
