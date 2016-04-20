@@ -8,7 +8,6 @@ import           Data.Map (Map)
 import           Data.Monoid
 import           GHCJS.DOM.Types (Element, unElement)
 import           GHCJS.DOM.Element (toElement)
-import           GHCJS.Prim (JSRef)
 
 data Discrete = Down | Up deriving (Eq)
 

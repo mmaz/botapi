@@ -53,7 +53,7 @@ connect :: BotChan -> String -> EitherT ServantErr IO ()
 connect (BotChan _ sc) serial = liftIO . atomically $ writeTChan sc serial
 
 mkDrive :: [Word8] -> B.ByteString
-mkDrive = B.concat . map B.singleton . (driveOpcode :)
+mkDrive = B.pack . (driveOpcode :)
 
 --TODO(MAZUMDER) this nonsense is about as untyped as you can get - promote all constants to singletons
 queueCommand :: B.ByteString -> ReaderT BotChan (EitherT ServantErr IO) ()

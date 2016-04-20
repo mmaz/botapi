@@ -24,4 +24,9 @@ all.js
 *.js_o
 *.js_hi
 .DS_Store
+*~
 manifest.webapp
+TAGS
+\#*\#
+.\#*
+# thanks to https://github.com/github/gitignore/blob/master/Global/Emacs.gitignore
