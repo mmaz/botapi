@@ -112,23 +112,17 @@ encodeSpeed :: Int -> BB.Builder
 encodeSpeed cmSpeed = BB.int16BE mmSpeed
   where mmSpeed = fromIntegral (cmSpeed * 10)
 
-encodeMmSec :: Int -> BB.Builder
-encodeMmSec = BB.int16BE . fromIntegral
-
-radToCommand :: Double -> IO B.ByteString
+radToCommand :: Double -> B.ByteString
 radToCommand radPerSec
-  -- | speed < -20 || speed > 20 = print (show speed ++ " too fast") >> stopcmd
-  | velMmSec < -2000 = encNeg (-2000)
-  | velMmSec >  2000 = encPos   2000
-  | velMmSec <     0 = encNeg velMmSec
-  | velMmSec >     0 = encPos velMmSec
-  | velMmSec == 0 = stopcmd
-  -- | otherwise = enc velMmSec
-  where stopcmd = return $ mkDrive [0, 0, 0, 0]
-        encPos s = return . LBS.toStrict . BB.toLazyByteString $ BB.word8 driveOpcode <> encodeMmSec s <> BB.word16BE 0x0001
-        encNeg s = return . LBS.toStrict . BB.toLazyByteString $ BB.word8 driveOpcode <> encodeMmSec s <> BB.word16BE 0xFFFF
-        velMmSec :: Int = round (abs radPerSec * (258.0/2.0))
-          -- compute the velocity, given that the robot's radius is 258mm/2.0
+  | radPerSec == 0  = stopcmd
+  | velMmSec > 2000 = enc 2000 -- velMmSec can only be positive
+  | otherwise       = enc velMmSec
+  where stopcmd          = mkDrive [0, 0, 0, 0]
+        enc s            = LBS.toStrict . BB.toLazyByteString $ BB.word8 driveOpcode <> encodeMmSec s <> turnInPlace
+        velMmSec :: Int  = round (abs radPerSec * 129) -- roomba diameter is 258mm
+        ccw      :: Bool = radPerSec >= 0
+        encodeMmSec      = BB.int16BE . fromIntegral
+        turnInPlace = if ccw then BB.word16BE 0x0001 else BB.word16BE 0xFFFF
 
 
 cmToCommand :: Int -> IO B.ByteString
@@ -150,16 +144,14 @@ rotateRateHandler :: Double -> ReaderT BotChan (EitherT ServantErr IO) ()
 rotateRateHandler radPerSec = do
   liftIO $ print radPerSec
   liftIO $ print $ round (radPerSec * (258.0/2.0))
-  cmd <- liftIO $ radToCommand radPerSec
-  queueCommand cmd
+  queueCommand $ radToCommand radPerSec
 
 rotateHandler :: (Double -> IO Double) -> Double -> ReaderT BotChan (EitherT ServantErr IO) ()
 rotateHandler pid r = do
   liftIO $ print ("error: " ++ show r)
   controlOut <- liftIO $ pid r
   liftIO $ print ("control: " ++ show controlOut)
-  cmd <- liftIO $ radToCommand controlOut
-  queueCommand cmd
+  queueCommand $ radToCommand controlOut
 
 -- locationHandler :: ViconLoc -> ReaderT BotChan (EitherT ServantErr IO) ()
 -- locationHandler v@ViconLoc{..} = do
