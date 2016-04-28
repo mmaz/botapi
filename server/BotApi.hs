@@ -147,11 +147,12 @@ rotateRateHandler radPerSec = do
   queueCommand $ radToCommand radPerSec
 
 rotateHandler :: (Double -> IO Double) -> Double -> ReaderT BotChan (EitherT ServantErr IO) ()
-rotateHandler pid r = do
-  liftIO $ print ("error: " ++ show r)
-  controlOut <- liftIO $ pid r
+rotateHandler pid viconangle = do
+  liftIO $ print ("error: " ++ show err)
+  controlOut <- liftIO $ pid err
   liftIO $ print ("control: " ++ show controlOut)
   queueCommand $ radToCommand controlOut
+  where err = - viconangle
 
 -- locationHandler :: ViconLoc -> ReaderT BotChan (EitherT ServantErr IO) ()
 -- locationHandler v@ViconLoc{..} = do
@@ -207,5 +208,8 @@ main = do
   ser <- atomically newTChan
   let botchan = BotChan cmds ser
   _ <- async $ serialx botchan -- TODO(MAZUMDER) clean teardown with withAsync
-  pid <- pidTimedIO 0.5 0 0
+  -- TODO(MAZUMDER)
+  -- pidlocationy <- pidTimedIO 0.5 0 0
+  -- pidrotation  <- pidTimedIO 0.5 0 0
+  pid  <- pidTimedIO 1.5 0 0
   run 9876 $ app (pid 0) botchan
