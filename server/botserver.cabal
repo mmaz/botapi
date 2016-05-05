@@ -27,6 +27,7 @@ library
                , serialport
                , stm
                , async
+               , optparse-generic
                , directory
                , formatting
                , binary
@@ -59,3 +60,4 @@ executable botserver
                , directory
                , binary
                , time
+               , optparse-generic

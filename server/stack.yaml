@@ -3,4 +3,5 @@ packages:
 - '.'
 extra-deps:
 - serialport-0.4.7
+- optparse-generic-1.1.0
 resolver: nightly-2016-02-18

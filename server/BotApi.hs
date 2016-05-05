@@ -22,6 +22,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Aeson as Aeson
 -- import           Data.Aeson.Types (Parser, defaultOptions, fieldLabelModifier)
 import           GHC.Generics
+import           Options.Generic
 import           PID
 
 type CommandChan = B.ByteString
@@ -202,8 +203,15 @@ serialx (BotChan commandchan serialchan) = do
         --     c <- atomically $ readTChan commandchan
         --     print c
 
+data CliPreferences = CliPreferences {
+  port :: Int
+, defaultTty :: Maybe String
+} deriving (Generic, Show)
+instance ParseRecord CliPreferences
+
 main :: IO ()
 main = do
+  o <- getRecord "Botserver"
   cmds <- atomically newTChan
   ser <- atomically newTChan
   let botchan = BotChan cmds ser
@@ -211,5 +219,6 @@ main = do
   -- TODO(MAZUMDER)
   -- pidlocationy <- pidTimedIO 0.5 0 0
   -- pidrotation  <- pidTimedIO 0.5 0 0
+  mapM_ (atomically . writeTChan ser) (defaultTty o)
   pid  <- pidTimedIO 1.5 0 0
-  run 9876 $ app (pid 0) botchan
+  run (port o) $ app (pid 0) botchan
