@@ -5,6 +5,7 @@ import           Control.Monad.Trans.Reader (ReaderT, ask)
 import           Network.Wai (Application)
 import           Network.Wai.Handler.Warp (run)
 import           Control.Monad
+import           Control.Concurrent (threadDelay)
 import           Data.Monoid
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
@@ -63,6 +64,7 @@ type BotAPI =     "forward" :> Get '[] ()
             :<|>  "cmps" :> Capture "speed" Int :> Get '[] ()
             :<|>  "rotaterate" :> Capture "r" Double :> Get '[] ()
             :<|>  "rotate" :> Capture "r" Double :> Get '[] ()
+            :<|>  "rotatefixed" :> Capture "s" Double :> Get '[] ()
             :<|>  "debug" :> Get '[JSON] [FilePath]
             :<|>  "connect" :> Capture "serial" String :> Get '[] ()
             :<|> Raw
@@ -81,6 +83,7 @@ botapi pid bc =    store continuouslyforward
           :<|> enter (runReaderTNat bc) cmpsHandler
           :<|> enter (runReaderTNat bc) rotateRateHandler
           :<|> enter (runReaderTNat bc) rotateHandler pid
+          :<|> enter (runReaderTNat bc) rotateFixedHandler
           :<|> debugDevDir
           :<|> connect bc
           :<|> serveDirectory "app.jsexe"
@@ -146,6 +149,15 @@ rotateRateHandler radPerSec = do
   liftIO $ print radPerSec
   liftIO $ print $ round (radPerSec * (258.0/2.0))
   queueCommand $ radToCommand radPerSec
+
+rotateFixedHandler :: Double -> ReaderT BotChan (EitherT ServantErr IO) ()
+rotateFixedHandler npseconds = do
+  let pos       = npseconds > 0
+      seconds   = if pos then npseconds else (-1) * npseconds
+      radpersec = if pos then 0.78 else -0.78
+  queueCommand $ radToCommand radpersec
+  liftIO $ threadDelay (round $ 1000000 * seconds)
+  queueCommand $ radToCommand 0
 
 rotateHandler :: (Double -> IO Double) -> Double -> ReaderT BotChan (EitherT ServantErr IO) ()
 rotateHandler pid viconangle = do
